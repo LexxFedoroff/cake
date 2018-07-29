@@ -2,6 +2,7 @@
 #addin "nuget:https://api.nuget.org/v3/index.json?package=Cake.Coveralls&version=0.7.0"
 #addin "nuget:https://api.nuget.org/v3/index.json?package=Cake.Twitter&version=0.6.0"
 #addin "nuget:https://api.nuget.org/v3/index.json?package=Cake.Gitter&version=0.7.0"
+#addin "nuget:https://api.nuget.org/v3/index.json?package=Cake.Docker&version=0.9.5"
 
 // Install tools.
 #tool "nuget:https://api.nuget.org/v3/index.json?package=gitreleasemanager&version=0.7.0"
@@ -207,6 +208,17 @@ Task("Copy-Files")
     // Copy Cake.XML (since publish does not do this anymore)
     CopyFileToDirectory("./src/Cake/bin/" + parameters.Configuration + "/net461/Cake.xml", parameters.Paths.Directories.ArtifactsBinFullFx);
     CopyFileToDirectory("./src/Cake/bin/" + parameters.Configuration + "/netcoreapp2.0/Cake.xml", parameters.Paths.Directories.ArtifactsBinNetCore);
+});
+
+Task("Build-Image")
+    .IsDependentOn("Copy-Files")
+    .Does(() => 
+{
+    var settings = new DockerImageBuildSettings {
+        BuildArg = new [] { $"path={parameters.Paths.Directories.ArtifactsBinNetCore}"},
+        Tag = new [] {"cake-build"}
+    };
+    DockerBuild(settings, ".");
 });
 
 Task("Zip-Files")
